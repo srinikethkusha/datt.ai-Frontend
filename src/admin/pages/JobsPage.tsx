@@ -3,6 +3,11 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -11,13 +16,35 @@ import {
   Typography,
 } from "@mui/material";
 import { EMPLOYMENT_TYPE_LABELS } from "@src/careers/types";
-import { type ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
-import { useGetAdminJobs } from "../api/useAdminJobs";
+import { useDeleteJob, useGetAdminJobs } from "../api/useAdminJobs";
 
 export function JobsPage(): ReactElement {
   const { data: jobs, isLoading } = useGetAdminJobs();
+  const { mutate: deleteJob, isPending: isDeleting } = useDeleteJob();
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+
+  const handleDeleteConfirm = (jobId: string) => {
+    setJobToDelete(jobId);
+  };
+
+  const handleDeleteCancel = () => {
+    setJobToDelete(null);
+  };
+
+  const handleDeleteConfirmation = () => {
+    if (jobToDelete) {
+      deleteJob(jobToDelete, {
+        onSuccess: () => {
+          setJobToDelete(null);
+        },
+      });
+    }
+  };
+
+  const jobToDeleteTitle = jobs?.find((j) => j.id === jobToDelete)?.title || "";
 
   return (
     <Box>
@@ -59,15 +86,48 @@ export function JobsPage(): ReactElement {
                 </TableCell>
                 <TableCell>{new Date(job.deadline).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Button component={RouterLink} to={`/admin/jobs/${job.id}/edit`} size="small">
-                    Edit
-                  </Button>
+                  <Stack direction="row" spacing={1}>
+                    <Button component={RouterLink} to={`/admin/jobs/${job.id}/edit`} size="small">
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteConfirm(job.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={Boolean(jobToDelete)} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete Job Posting</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the job posting "<strong>{jobToDeleteTitle}</strong>"?
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirmation}
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

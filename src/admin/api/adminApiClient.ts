@@ -44,7 +44,7 @@ adminApiClient.interceptors.response.use(
 
       if (sessionData.session) {
         throw new AdminApiError(
-          "Backend rejected your login token. Set SUPABASE_URL, SUPABASE_JWT_SECRET, and SUPABASE_SERVICE_ROLE_KEY in database-cons/.env, then restart the backend.",
+          "Backend rejected your login token. Set SUPABASE_URL, SUPABASE_JWT_SECRET, and SUPABASE_SERVICE_ROLE_KEY in datt.ai-BE/.env, then restart the backend.",
           401,
           true,
         );

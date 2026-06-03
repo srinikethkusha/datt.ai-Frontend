@@ -78,3 +78,20 @@ export function useUpdateJob(
     },
   });
 }
+
+export function useDeleteJob(options: AllowedUseMutationOptions<Job, string> = {}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...options,
+    mutationFn: async (jobId: string) => {
+      const { data } = await adminApiClient.delete(`/admin/jobs/${jobId}`);
+      return jobSchema.parse(data);
+    },
+    onSuccess: (...args) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      options.onSuccess?.(...args);
+    },
+  });
+}
